@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0d2244">
+<title>MiraMix — Попади в цвет</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  :root {
+    --navy-card: #14294d;
+    --navy-deep: #081a33;
+    --orange: #f26b1d;
+    --orange-hover: #ff7f33;
+    --yellow: #f5c518;
+    --muted: #8ba0c0;
+  }
+
+  html, body { height: 100%; overscroll-behavior: none; }
+
+  body {
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle at 50% 20%, #16325c 0%, var(--navy-deep) 70%);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    color: #e8edf5;
+    padding: 10px;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+  }
+
+  .app {
+    width: 100%;
+    max-width: 480px;
+    background: var(--navy-card);
+    border-radius: 20px;
+    padding: 18px;
+    box-shadow: 0 24px 70px rgba(0,0,0,0.6),
+                0 0 0 1px rgba(255,255,255,0.06);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .app::before, .app::after {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(40px);
+    opacity: 0.25;
+    pointer-events: none;
+  }
+  .app::before { width: 160px; height: 160px; background: var(--orange); top: -70px; right: -70px; }
+  .app::after { width: 140px; height: 140px; background: #3b82f6; bottom: -70px; left: -70px; }
+
+  header { text-align: center; margin-bottom: 14px; position: relative; z-index: 1; }
+
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 20px;
+    font-weight: 800;
+  }
+
+  .brand .mascot {
+    width: 36px;
+    height: 36px;
+    object-fit: contain;
+    flex-shrink: 0;
+    filter: drop-shadow(0 2px 6px rgba(0,0,0,0.4));
+  }
+
+  .brand .name { color: #fff; }
+  .brand .divider { color: rgba(255,255,255,0.2); font-weight: 300; }
+  .brand .game-name { font-size: 14px; font-weight: 500; color: var(--muted); }
+
+  .tagline {
+    font-size: 10px;
+    color: var(--orange);
+    margin-top: 4px;
+    letter-spacing: 1.3px;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+
+  .welcome {
+    text-align: center;
+    padding: 6px 0 10px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .welcome .mascot-big {
+    width: 140px;
+    height: 140px;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto 8px;
+    filter: drop-shadow(0 10px 20px rgba(0,0,0,0.5));
+    animation: floaty 3s ease-in-out infinite;
+  }
+
+  @keyframes floaty {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+  }
+
+  .welcome .greeting {
+    font-size: 15px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 4px;
+  }
+
+  .welcome .greeting-sub {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.4;
+    margin-bottom: 12px;
+  }
+
+  .progress {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 10px;
+    padding: 0 2px;
+    position: relative; z-index: 1;
+  }
+  .progress b { color: #fff; }
+
+  .board {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 14px;
+    position: relative; z-index: 1;
+  }
+
+  .swatch {
+    aspect-ratio: 1;
+    border-radius: 12px;
+    position: relative;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08),
+                0 4px 14px rgba(0,0,0,0.4);
+  }
+
+  .swatch .label {
+    position: absolute;
+    top: 6px; left: 8px;
+    font-size: 9px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 3px 7px;
+    border-radius: 5px;
+    color: #fff;
+    font-weight: 700;
+  }
+
+  .swatch#target .label { background: rgba(13,34,68,0.9); color: #cfe0ff; }
+  .swatch#yours .label { background: var(--orange); }
+
+  .sliders {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 14px;
+    position: relative; z-index: 1;
+  }
+
+  .slider-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .slider-row .name {
+    width: 16px;
+    font-weight: 700;
+    font-size: 13px;
+  }
+  .slider-row.r .name { color: #ef4444; }
+  .slider-row.g .name { color: #22c55e; }
+  .slider-row.b .name { color: #3b82f6; }
+
+  .step-btn {
+    width: 34px; height: 34px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #fff;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-family: inherit;
+    padding: 0;
+  }
+  .step-btn:active { background: var(--orange); }
+
+  input[type="range"] {
+    flex: 1;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 10px;
+    border-radius: 5px;
+    outline: none;
+    cursor: pointer;
+    touch-action: pan-y;
+  }
+
+  .slider-row.r input[type="range"] { background: linear-gradient(90deg, #1a0a0a, #ef4444); }
+  .slider-row.g input[type="range"] { background: linear-gradient(90deg, #0a1a0a, #22c55e); }
+  .slider-row.b input[type="range"] { background: linear-gradient(90deg, #0a0f1a, #3b82f6); }
+
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: #fff;
+    border: 3px solid var(--navy-card);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    cursor: pointer;
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    background: #fff;
+    border: 3px solid var(--navy-card);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+  }
+
+  .slider-row .val {
+    width: 34px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    font-size: 12px;
+    color: #c8d6ef;
+    flex-shrink: 0;
+  }
+
+  #checkBtn {
+    width: 100%;
+    padding: 16px;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    font-family: inherit;
+    color: #fff;
+    background: var(--orange);
+    box-shadow: 0 8px 24px rgba(242,107,29,0.35);
+    text-transform: uppercase;
+    position: relative; z-index: 1;
+  }
+  #checkBtn:active { transform: scale(0.98); background: var(--orange-hover); }
+  #checkBtn:disabled { opacity: 0.5; }
+
+  .result {
+    margin-top: 12px;
+    padding: 12px;
+    background: rgba(8,26,51,0.6);
+    border-radius: 10px;
+    text-align: center;
+    display: none;
+    border: 1px solid rgba(255,255,255,0.06);
+    position: relative; z-index: 1;
+  }
+  .result.show { display: block; animation: fadeIn 0.3s; }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .result .delta { font-size: 24px; font-weight: 800; margin-bottom: 3px; font-variant-numeric: tabular-nums; }
+  .result .rank { font-size: 14px; color: #dbe6f7; font-weight: 600; }
+  .result .advice { font-size: 12px; color: var(--muted); margin-top: 6px; line-height: 1.35; }
+
+  .final { text-align: center; display: none; position: relative; z-index: 1; }
+  .final.show { display: block; animation: fadeIn 0.4s; }
+
+  .final .mascot-final {
+    width: 120px;
+    height: 120px;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto 6px;
+    filter: drop-shadow(0 8px 18px rgba(0,0,0,0.5));
+    animation: floaty 3s ease-in-out infinite;
+  }
+
+  .final .title { font-size: 18px; margin-bottom: 6px; font-weight: 700; }
+
+  .final .big-score {
+    font-size: 48px;
+    font-weight: 800;
+    color: var(--orange);
+    margin: 4px 0 2px;
+    font-variant-numeric: tabular-nums;
+    text-shadow: 0 0 30px rgba(242,107,29,0.5);
+  }
+
+  .final .max { font-size: 12px; color: var(--muted); margin-bottom: 12px; }
+  .final .final-rank { font-size: 14px; color: #dbe6f7; margin: 10px 0 16px; line-height: 1.35; }
+
+  .call-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 14px;
+    font-size: 15px;
+    font-weight: 700;
+    color: #fff;
+    background: linear-gradient(135deg, var(--orange), var(--yellow));
+    border-radius: 12px;
+    text-decoration: none;
+    box-shadow: 0 8px 24px rgba(242,107,29,0.4);
+    margin-bottom: 8px;
+    font-variant-numeric: tabular-nums;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .call-btn:active { transform: scale(0.98); }
+
+  .final button.secondary {
+    width: 100%;
+    padding: 14px;
+    font-size: 14px;
+    font-weight: 600;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    font-family: inherit;
+    background: rgba(255,255,255,0.08);
+    color: #cfe0ff;
+    margin-top: 8px;
+  }
+
+  footer {
+    text-align: center;
+    margin-top: 14px;
+    font-size: 11px;
+    color: var(--muted);
+    position: relative; z-index: 1;
+  }
+
+  .footer-brand {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    color: #cfe0ff;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .footer-brand .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--orange); }
+
+  .footer-phone {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #fff;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    padding: 8px 14px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .footer-phone:active { background: rgba(242,107,29,0.15); border-color: var(--orange); }
+
+  @media (max-height: 780px) {
+    .welcome .mascot-big { width: 110px; height: 110px; }
+    .app { padding: 14px; }
+    header { margin-bottom: 10px; }
+    .board { margin-bottom: 10px; }
+    .sliders { gap: 8px; margin-bottom: 10px; }
+    .step-btn { width: 30px; height: 30px; font-size: 16px; }
+    #checkBtn { padding: 13px; font-size: 14px; }
+    .final .mascot-final { width: 90px; height: 90px; }
+    .final .big-score { font-size: 40px; }
+  }
+</style>
+</head>
+<body>
+  <div class="app">
+    <div id="gameView">
+      <header>
+        <div class="brand">
+          <img src="miramix-mascot.png" alt="MiraMix" class="mascot">
+          <span class="name">MiraMix</span>
+          <span class="divider">|</span>
+          <span class="game-name">Попади в цвет</span>
+        </div>
+        <div class="tagline">car paint system</div>
+      </header>
+
+      <div class="welcome" id="welcomeBlock">
+        <img src="miramix-mascot.png" alt="MiraMix" class="mascot-big">
+        <div class="greeting">Привет! Я — банка MiraMix 🎨</div>
+        <div class="greeting-sub">Подбери цвет точнее всех за 5 раундов<br>и узнай, какой ты колорист!</div>
+      </div>
+
+      <div class="progress">
+        <div>Раунд <b><span id="round">1</span>/5</b></div>
+        <div>Счёт: <b><span id="score">0</span></b></div>
+      </div>
+
+      <div class="board">
+        <div class="swatch" id="target"><div class="label">Эталон</div></div>
+        <div class="swatch" id="yours"><div class="label">Твой</div></div>
+      </div>
+
+      <div class="sliders">
+        <div class="slider-row r">
+          <span class="name">R</span>
+          <button class="step-btn" data-ch="r" data-d="-1">−</button>
+          <input type="range" id="r" min="0" max="255" value="128">
+          <button class="step-btn" data-ch="r" data-d="1">+</button>
+          <span class="val" id="rv">128</span>
+        </div>
+        <div class="slider-row g">
+          <span class="name">G</span>
+          <button class="step-btn" data-ch="g" data-d="-1">−</button>
+          <input type="range" id="g" min="0" max="255" value="128">
+          <button class="step-btn" data-ch="g" data-d="1">+</button>
+          <span class="val" id="gv">128</span>
+        </div>
+        <div class="slider-row b">
+          <span class="name">B</span>
+          <button class="step-btn" data-ch="b" data-d="-1">−</button>
+          <input type="range" id="b" min="0" max="255" value="128">
+          <button class="step-btn" data-ch="b" data-d="1">+</button>
+          <span class="val" id="bv">128</span>
+        </div>
+      </div>
+
+      <button id="checkBtn">Проверить</button>
+
+      <div class="result" id="result">
+        <div class="delta" id="deltaVal"></div>
+        <div class="rank" id="rankVal"></div>
+        <div class="advice" id="adviceVal"></div>
+      </div>
+    </div>
+
+    <div class="final" id="finalView">
+      <img src="miramix-mascot.png" alt="MiraMix" class="mascot-final">
+      <div class="title">🏁 Игра завершена!</div>
+      <div class="big-score" id="finalScore">0</div>
+      <div class="max">из <span id="maxScore">500</span> возможных</div>
+      <div class="final-rank" id="finalRank"></div>
+
+      <a href="tel:+79281213774" class="call-btn">📞 Позвонить: 8 928 121-37-74</a>
+      <button id="shareBtn" class="call-btn" style="background: linear-gradient(135deg, #3b82f6, #06b6d4); box-shadow: 0 8px 24px rgba(59,130,246,0.4);">📣 Поделиться результатом</button>
+      <button id="restartBtn" class="secondary">Сыграть ещё раз</button>
+    </div>
+
+    <footer>
+      <div class="footer-brand">
+        <span class="dot"></span>
+        <span>MiraMix · car paint system</span>
+      </div>
+      <a href="tel:+79281213774" class="footer-phone">📞 8 928 121-37-74</a>
+    </footer>
+  </div>
+
+<script>
+(function(){
+  'use strict';
+  var TOTAL_ROUNDS = 5;
+  var SHARE_URL = window.location.href;
+
+  var els = {
+    round: document.getElementById('round'),
+    score: document.getElementById('score'),
+    target: document.getElementById('target'),
+    yours: document.getElementById('yours'),
+    r: document.getElementById('r'), g: document.getElementById('g'), b: document.getElementById('b'),
+    rv: document.getElementById('rv'), gv: document.getElementById('gv'), bv: document.getElementById('bv'),
+    checkBtn: document.getElementById('checkBtn'),
+    result: document.getElementById('result'),
+    deltaVal: document.getElementById('deltaVal'),
+    rankVal: document.getElementById('rankVal'),
+    adviceVal: document.getElementById('adviceVal'),
+    gameView: document.getElementById('gameView'),
+    finalView: document.getElementById('finalView'),
+    finalScore: document.getElementById('finalScore'),
+    maxScore: document.getElementById('maxScore'),
+    finalRank: document.getElementById('finalRank'),
+    shareBtn: document.getElementById('shareBtn'),
+    restartBtn: document.getElementById('restartBtn'),
+    welcomeBlock: document.getElementById('welcomeBlock')
+  };
+
+  var state = { round: 1, scores: [], target: {r:128,g:128,b:128} };
+
+  function clamp(v, min, max) { return Math.max(min, Math.min(max, Math.round(v))); }
+
+  function randomTarget() {
+    var base = Math.floor(Math.random() * 256);
+    var shift = function() { return Math.floor((Math.random() - 0.5) * 180); };
+    return {
+      r: clamp(base + shift(), 20, 235),
+      g: clamp(Math.floor(Math.random() * 256), 20, 235),
+      b: clamp(Math.floor(Math.random() * 256), 20, 235)
+    };
+  }
+
+  function rgbStr(c) { return 'rgb(' + c.r + ',' + c.g + ',' + c.b + ')'; }
+
+  function colorDelta(a, b) {
+    var rmean = (a.r + b.r) / 2;
+    var dr = a.r - b.r, dg = a.g - b.g, db = a.b - b.b;
+    var r = (((512 + rmean) * dr * dr) >> 8) + 4 * dg * dg + (((767 - rmean) * db * db) >> 8);
+    return Math.sqrt(r) / 2.55;
+  }
+
+  function scoreFromDelta(d) { return Math.max(0, Math.round(100 - d * 3.3)); }
+
+  function rankFromDelta(d) {
+    if (d < 2)  return { rank: '🏆 МАСТЕР-КОЛОРИСТ', advice: 'Идеальное попадание!' };
+    if (d < 5)  return { rank: '🥇 ОПЫТНЫЙ КОЛОРИСТ', advice: 'Почти в точку — клиент бы не заметил.' };
+    if (d < 10) return { rank: '🥈 УВЕРЕННЫЙ УРОВЕНЬ', advice: 'Хорошо, но есть куда расти.' };
+    if (d < 20) return { rank: '🥉 НАЧИНАЮЩИЙ', advice: 'Оттенок заметно отличается.' };
+    return { rank: '😅 НУЖНА ПРАКТИКА', advice: 'Совсем другой цвет. Попробуй ещё.' };
+  }
+
+  function rankFromTotal(total) {
+    if (total >= 450) return '🏆 Мастер-колорист · идеальный глазомер';
+    if (total >= 380) return '🥇 Опытный колорист · отличный результат';
+    if (total >= 300) return '🥈 Уверенный уровень · хороший результат';
+    if (total >= 200) return '🥉 Начинающий · есть куда расти';
+    return '😅 Нужна практика · попробуй ещё раз';
+  }
+
+  function updateYourColor() {
+    var r = +els.r.value, g = +els.g.value, b = +els.b.value;
+    els.rv.textContent = r;
+    els.gv.textContent = g;
+    els.bv.textContent = b;
+    els.yours.style.background = 'rgb(' + r + ',' + g + ',' + b + ')';
+  }
+
+  function newRound() {
+    state.target = randomTarget();
+    els.target.style.background = rgbStr(state.target);
+    els.r.value = 128; els.g.value = 128; els.b.value = 128;
+    updateYourColor();
+    els.result.classList.remove('show');
+    els.checkBtn.textContent = 'Проверить';
+    els.checkBtn.disabled = false;
+    els.checkBtn.onclick = check;
+    if (state.round > 1) els.welcomeBlock.style.display = 'none';
+    els.round.textContent = state.round;
+    els.score.textContent = state.scores.reduce(function(a,b){return a+b;}, 0);
+  }
+
+  function check() {
+    var yours = { r: +els.r.value, g: +els.g.value, b: +els.b.value };
+    var d = colorDelta(state.target, yours);
+    var pts = scoreFromDelta(d);
+    state.scores.push(pts);
+
+    var info = rankFromDelta(d);
+    els.deltaVal.textContent = 'ΔE ≈ ' + d.toFixed(1);
+    els.deltaVal.style.color = d < 5 ? '#4ade80' : d < 10 ? '#f5c518' : d < 20 ? '#f26b1d' : '#ef4444';
+    els.rankVal.textContent = info.rank + ' · +' + pts;
+    els.adviceVal.textContent = info.advice;
+    els.result.classList.add('show');
+
+    els.score.textContent = state.scores.reduce(function(a,b){return a+b;}, 0);
+    els.checkBtn.disabled = false;
+
+    if (state.round < TOTAL_ROUNDS) {
+      els.checkBtn.textContent = 'Следующий раунд →';
+      els.checkBtn.onclick = nextRound;
+    } else {
+      els.checkBtn.textContent = 'Показать результат';
+      els.checkBtn.onclick = showFinal;
+    }
+  }
+
+  function nextRound() { state.round++; newRound(); }
+
+  function showFinal() {
+    var total = state.scores.reduce(function(a,b){return a+b;}, 0);
+    els.finalScore.textContent = total;
+    els.maxScore.textContent = TOTAL_ROUNDS * 100;
+    els.finalRank.textContent = rankFromTotal(total);
+    els.gameView.style.display = 'none';
+    els.finalView.classList.add('show');
+  }
+
+  function share() {
+    var total = state.scores.reduce(function(a,b){return a+b;}, 0);
+    var max = TOTAL_ROUNDS * 100;
+    var text = '🎨 Я набрал ' + total + '/' + max + ' в игре «Попади в цвет» от MiraMix! Сможешь точнее?';
+    if (navigator.share) {
+      navigator.share({ title: 'MiraMix · Попади в цвет', text: text, url: SHARE_URL }).catch(function(){});
+      return;
+    }
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text + '\n' + SHARE_URL).then(function(){
+        els.shareBtn.textContent = '✅ Скопировано';
+        setTimeout(function(){ els.shareBtn.textContent = '📣 Поделиться результатом'; }, 2000);
+      }).catch(function(){ prompt('Скопируй:', text + '\n' + SHARE_URL); });
+    } else {
+      prompt('Скопируй:', text + '\n' + SHARE_URL);
+    }
+  }
+
+  function restart() {
+    state = { round: 1, scores: [], target: {r:128,g:128,b:128} };
+    els.finalView.classList.remove('show');
+    els.gameView.style.display = 'block';
+    els.welcomeBlock.style.display = 'block';
+    newRound();
+  }
+
+  [els.r, els.g, els.b].forEach(function(s){ s.addEventListener('input', updateYourColor); });
+
+  document.querySelectorAll('.step-btn').forEach(function(btn){
+    var ch = btn.getAttribute('data-ch');
+    var d = +btn.getAttribute('data-d');
+    var slider = els[ch];
+    var holdTimer, holdInterval;
+
+    var apply = function() {
+      slider.value = clamp(+slider.value + d, 0, 255);
+      updateYourColor();
+    };
+    var start = function(e) {
+      e.preventDefault();
+      apply();
+      holdTimer = setTimeout(function(){
+        holdInterval = setInterval(apply, 60);
+      }, 400);
+    };
+    var stop = function() {
+      clearTimeout(holdTimer);
+      clearInterval(holdInterval);
+    };
+    btn.addEventListener('touchstart', start, { passive: false });
+    btn.addEventListener('touchend', stop);
+    btn.addEventListener('touchcancel', stop);
+    btn.addEventListener('mousedown', start);
+    btn.addEventListener('mouseup', stop);
+    btn.addEventListener('mouseleave', stop);
+  });
+
+  els.shareBtn.onclick = share;
+  els.restartBtn.onclick = restart;
+
+  newRound();
+})();
+</script>
+</body>
+</html>
